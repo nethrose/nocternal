@@ -20,7 +20,13 @@ jobs:
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm install --production
+      run: npm install
+
+    - name: Audit dependencies for vulnerabilities
+      run: npm audit
+
+    - name: Fix vulnerabilities in dependencies
+      run: npm audit fix --force
 
     - name: Commit package-lock.json
       run: |
