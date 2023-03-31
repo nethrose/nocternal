@@ -20,7 +20,10 @@ jobs:
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm install --no-optional --no-audit --legacy-peer-deps --save-exact
+      run: npm install --legacy-peer-deps --save-exact
+      
+    - name: Prune development dependencies
+      run: npm prune --production
     
     - name: Clean up node_modules directory
       run: rm -rf node_modules/
