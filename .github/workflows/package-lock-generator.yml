@@ -1,0 +1,32 @@
+name: Generate package-lock.json
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js and update npm
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+      run: npm install -g npm@latest
+
+    - name: Install dependencies
+      run: npm install --no-optional --no-audit --legacy-peer-deps
+
+    - name: Generate package-lock.json
+      run: npm install --package-lock-only
+
+    - name: Commit package-lock.json
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add package-lock.json
+        git commit -m 'Update package-lock.json'
+        git push
