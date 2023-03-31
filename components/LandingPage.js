@@ -1,11 +1,6 @@
 import React from 'react';
 
-interface LandingPageProps {
-  title: string;
-  description: string;
-}
-
-const LandingPage: React.FC<LandingPageProps> = ({ title, description }) => {
+function LandingPage({ title, description }) {
   console.log('Rendering LandingPage...');
   return (
     <div>
