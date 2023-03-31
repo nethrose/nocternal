@@ -6,6 +6,7 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ title, description }) => {
+  console.log('Rendering LandingPage...');
   return (
     <div>
       <h1>{title}</h1>
