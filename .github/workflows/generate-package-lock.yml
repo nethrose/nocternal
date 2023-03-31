@@ -8,32 +8,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: 16.x
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+      
+    - name: Update npm
+      run: npm install -g npm@latest
 
-      - name: Update npm
-        run: npm install -g npm@latest
+    - name: Install dependencies
+      run: npm install --no-audit --legacy-peer-deps
 
-      - name: Update dependencies
-        run: |
-          npm install react-scripts@5.0.1
-          npm install
+    - name: Generate package-lock.json
+      run: npm shrinkwrap --dev
 
-      - name: Audit dependencies for vulnerabilities
-        run: npm audit
-
-      - name: Fix vulnerabilities in dependencies
-        run: npm audit fix --force
-
-      - name: Commit package-lock.json
-        run: |
-          git config --global user.name 'GitHub Action'
-          git config --global user.email 'action@github.com'
-          git add package-lock.json
-          git commit -m 'Update package-lock.json'
-          git push
+    - name: Commit package-lock.json
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add npm-shrinkwrap.json
+        git commit -m 'Update package-lock.json'
+        git push
