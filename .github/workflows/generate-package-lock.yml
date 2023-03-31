@@ -11,19 +11,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Node.js
+    - name: Set up Node.js and update npm
       uses: actions/setup-node@v2
       with:
         node-version: 16.x
-      
-    - name: Update npm
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm install --no-audit --legacy-peer-deps
+      run: npm install --no-optional --no-audit --legacy-peer-deps
 
     - name: Generate package-lock.json
-      run: npm shrinkwrap --dev
+      run: npm shrinkwrap --no-optional --dev
 
     - name: Commit package-lock.json
       run: |
