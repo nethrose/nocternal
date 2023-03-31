@@ -4,7 +4,9 @@
   "description": "Nocternal Operations Center",
   "main": "dist/main.js",
   "scripts": {
-    "start": "react-scripts start"
+    "start": "react-scripts start",
+    "start": "webpack serve",
+    "build": "webpack"
   },
   "dependencies": {
     "react": "^17.0.2",
