@@ -20,7 +20,7 @@ jobs:
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm ci --no-optional
+      run: npm install --package-lock-only
 
     - name: Commit package-lock.json
       run: |
