@@ -2,7 +2,7 @@
   "name": "nocternal",
   "version": "1.0.0",
   "description": "Nocternal Operations Center",
-  "main": "src/App.tsx",
+  "main": "dist/main.js",
   "scripts": {
     "start": "react-scripts start"
   },
