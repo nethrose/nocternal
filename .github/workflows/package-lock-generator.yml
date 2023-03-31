@@ -20,7 +20,7 @@ jobs:
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm install --no-optional --no-audit --legacy-peer-deps
+      run: npm install --no-optional --no-audit --legacy-peer-deps --save-exact
 
     - name: Generate package-lock.json
       run: npm install --package-lock-only
