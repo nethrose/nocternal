@@ -21,13 +21,23 @@ jobs:
       with:
         node-version: 16
 
+    - name: Generate package.json
+      run: |
+        cd backend
+        echo '{
+          "name": "backend",
+          "version": "1.0.0",
+          "scripts": {
+            "start": "node index.js"
+          },
+          "dependencies": {
+            "express": "^4.17.1",
+            "pg": "^8.7.1",
+            "timescaledb": "^0.3.1"
+          }
+        }' > package.json
+
     - name: Install dependencies
       run: |
         cd backend
         npm ci
-
-    # Add any additional steps like running tests, linting, etc.
-    # - name: Run tests
-    #   run: |
-    #     cd backend
-    #     npm test
