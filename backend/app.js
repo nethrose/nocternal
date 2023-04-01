@@ -9,7 +9,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// PostgreSQL connection
 const pool = new Pool({
   host: process.env.DB_HOST,
   database: process.env.DB_NAME,
@@ -18,9 +17,14 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
+
 const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-// edit this comment to test to trigger backend CI workflow
+
+module.exports = app; // This line is added to export the app for testing purposes
