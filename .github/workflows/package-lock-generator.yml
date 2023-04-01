@@ -20,7 +20,7 @@ jobs:
       run: npm install -g npm@latest
 
     - name: Install dependencies
-      run: npm install --legacy-peer-deps --save-exact
+      run: npm install --save-dev git && npm install --legacy-peer-deps --save-exact
       
     - name: Prune development dependencies
       run: npm prune --production
