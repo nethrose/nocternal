@@ -22,13 +22,12 @@ jobs:
     - name: Install dependencies
       run: npm install
       
-    - name: Prune development dependencies
-      run: npm prune --production
-    
-    - name: Clean up node_modules directory
-      run: rm -rf node_modules/
+    - name: Update specified dependencies
+      run: |
+        npx npm-force-resolutions
+        npm install
 
-    - name: Generate package-lock.json
+    - name: Regenerate package-lock.json
       run: npm install --package-lock-only
 
     - name: Commit package-lock.json
