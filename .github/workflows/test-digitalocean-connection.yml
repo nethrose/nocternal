@@ -1,16 +1,10 @@
-name: Test DigitalOcean Connection
+name: Test DO Connection
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'backend/**'
-  pull_request:
-    paths:
-      - 'backend/**'
 
 jobs:
-  test_connection:
+  setup:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,10 +12,8 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Get runner IP
-      id: runner-ip
-      run: |
-        ip=$(curl -s https://ipinfo.io/ip)
-        echo "RUNNER_IP=$ip" >> $GITHUB_ENV
+      id: get-ip
+      run: echo "RUNNER_IP=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_ENV
 
     - name: Add trusted source
       env:
@@ -30,12 +22,11 @@ jobs:
         response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "database", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
+        -d '{"rules": [{"type": "ip_addr", "value": "${RUNNER_IP}"}]}')
         echo "$response"
         echo "$response" | grep "HTTP/2 201" || exit 1
 
-
-    - name: Check IP in trusted sources
+    - name: Verify trusted source
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
@@ -43,20 +34,16 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
         echo "$response"
-        if ! echo "$response" | grep -q "\"$RUNNER_IP\""; then
-          echo "IP address not found in trusted sources"
-          exit 1
-        else
-          echo "IP address found in trusted sources"
-        fi
+        echo "$response" | grep "${RUNNER_IP}" || exit 1
 
     - name: Remove trusted source
+      if: always()
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        response=$(curl -i -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "database", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
+        -d '{"rules": [{"type": "ip_addr", "value": "${RUNNER_IP}"}]}')
         echo "$response"
-        echo "$response" | grep "HTTP/2 204" || exit 1
+        echo "$response" | grep "HTTP/2 201" || exit 1
