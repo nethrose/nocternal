@@ -5,13 +5,14 @@ const { pool } = require('./app');
 let server;
 
 describe('API tests', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     server = startServer();
+    await pool.connect();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
     server.close();
-    pool.end(); // Close the PostgreSQL connection
+    await pool.end(); // Close the PostgreSQL connection
   });
 
   test('Server should respond with status 200 on root path', async () => {
