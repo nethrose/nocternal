@@ -1,0 +1,61 @@
+name: Test DigitalOcean Connection
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'backend/**'
+  pull_request:
+    paths:
+      - 'backend/**'
+
+jobs:
+  test_connection:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Get runner IP
+      id: runner-ip
+      run: |
+        echo "::set-output name=ip::$(curl -s https://ipinfo.io/ip)"
+
+    - name: Add trusted source
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        response=$(curl -i -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
+        echo "$response"
+        echo "$response" | grep "HTTP/2 201" || exit 1
+
+    - name: Check IP in trusted sources
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
+        echo "$response"
+        ip="${{ steps.runner-ip.outputs.ip }}"
+        if ! echo "$response" | grep -q "\"$ip\""; then
+          echo "IP address not found in trusted sources"
+          exit 1
+        else
+          echo "IP address found in trusted sources"
+        fi
+
+    - name: Remove trusted source
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        response=$(curl -i -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
+        echo "$response"
+        echo "$response" | grep "HTTP/2 204" || exit 1
