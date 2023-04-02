@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.status(200).send('Hello, world!');
+});
+
 const startServer = () => {
   const PORT = process.env.PORT || 3001;
   const server = app.listen(PORT, () => {
@@ -34,10 +38,4 @@ pool.connect((err, client, release) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
 module.exports = { app, startServer };
-//edit this file to trigger backend CI
