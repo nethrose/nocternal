@@ -45,17 +45,24 @@ jobs:
         npm install
 
     - name: Run tests
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_PORT: ${{ secrets.DB_PORT }}
       run: |
         cd backend
         npm run test
-
+  
     - name: Add trusted source
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       run: |
-        export IP_ADDRESS=$(curl -s http://whatismyip.akamai.com)
-        export DATABASE_ID=${{ secrets.DATABASE_ID }}
-        export DO_API_TOKEN=${{ secrets.DO_API_TOKEN }}
-        export TRUSTED_SOURCE_NAME="Github Actions Runner"
-        curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" -d '{"type": "ip_addr", "value": "'"$IP_ADDRESS"'", "name": "'"$TRUSTED_SOURCE_NAME"'"}' "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall"
+        curl -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
 
     - name: Start the application
       env:
@@ -80,10 +87,11 @@ jobs:
         exit 1
         
     - name: Remove trusted source
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       if: always()
       run: |
-        export IP_ADDRESS=$(curl -s http://whatismyip.akamai.com)
-        export DATABASE_ID=${{ secrets.DATABASE_ID }}
-        export DO_API_TOKEN=${{ secrets.DO_API_TOKEN }}
-        export TRUSTED_SOURCE_ID=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall" | jq -r --arg IP_ADDRESS "$IP_ADDRESS" '.rules[] | select(.value == $IP_ADDRESS) | .uuid')
-        curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall/$TRUSTED_SOURCE_ID"
+        curl -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
