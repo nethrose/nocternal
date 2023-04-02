@@ -20,7 +20,8 @@ jobs:
     - name: Get runner IP
       id: runner-ip
       run: |
-        echo "::set-output name=ip::$(curl -s https://ipinfo.io/ip)"
+        ip=$(curl -s https://ipinfo.io/ip)
+        echo "RUNNER_IP=$ip" >> $GITHUB_ENV
 
     - name: Add trusted source
       env:
@@ -29,7 +30,7 @@ jobs:
         response=$(curl -i -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
         echo "$response"
         echo "$response" | grep "HTTP/2 201" || exit 1
 
@@ -41,8 +42,7 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
         echo "$response"
-        ip="${{ steps.runner-ip.outputs.ip }}"
-        if ! echo "$response" | grep -q "\"$ip\""; then
+        if ! echo "$response" | grep -q "\"$RUNNER_IP\""; then
           echo "IP address not found in trusted sources"
           exit 1
         else
@@ -56,6 +56,6 @@ jobs:
         response=$(curl -i -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
