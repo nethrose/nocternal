@@ -92,17 +92,22 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DO_API_TOKEN")
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
-        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
-        # Set the updated connection string and run tests
-        export DATABASE_URL="$connection_string"
+        DB_HOST=$(echo "$CONNECTION_DETAILS" | jq -r '.host')
+        DB_NAME=$(echo "$CONNECTION_DETAILS" | jq -r '.database')
+        DB_USERNAME=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
+        DB_PASSWORD=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
+        DB_PORT=$(echo "$CONNECTION_DETAILS" | jq -r '.port')
+        # Set the updated environment variables and run tests
         cd backend
-        echo "DATABASE_URL=$DATABASE_URL" > .env
-
+        echo "DB_HOST=$DB_HOST" > .env
+        echo "DB_NAME=$DB_NAME" >> .env
+        echo "DB_USERNAME=$DB_USERNAME" >> .env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+        echo "DB_PORT=$DB_PORT" >> .env
         # Retry connection attempts
         MAX_ATTEMPTS=5
         SLEEP_TIME=30
         attempt=1
-
         while [[ $attempt -le $MAX_ATTEMPTS ]]; do
           echo "Connection attempt $attempt..."
           if npm run test; then
@@ -119,8 +124,7 @@ jobs:
             fi
           fi
         done
-
-
+    
     - name: Start the application
       env:
         DATABASE_ID: ${{ secrets.DATABASE_ID }}
@@ -131,11 +135,18 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DO_API_TOKEN")
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
-        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
-
-        # Set the updated connection string and start the application
-        export DATABASE_URL="$connection_string"
+        DB_HOST=$(echo "$CONNECTION_DETAILS" | jq -r '.host')
+        DB_NAME=$(echo "$CONNECTION_DETAILS" | jq -r '.database')
+        DB_USERNAME=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
+        DB_PASSWORD=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
+        DB_PORT=$(echo "$CONNECTION_DETAILS" | jq -r '.port')
+        # Set the updated environment variables and start the application
         cd backend
+        echo "DB_HOST=$DB_HOST" > .env
+        echo "DB_NAME=$DB_NAME" >> .env
+        echo "DB_USERNAME=$DB_USERNAME" >> .env
+        echo "DB_PASSWORD=$DB_PASSWORD" >> .env
+        echo "DB_PORT=$DB_PORT" >> .env
         timeout 5s npm start || true
         
     - name: Check if app is running
