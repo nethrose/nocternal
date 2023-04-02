@@ -110,7 +110,7 @@ jobs:
         attempt=1
         while [[ $attempt -le $MAX_ATTEMPTS ]]; do
           echo "Connection attempt $attempt..."
-          if npm run test; then
+          if npm run test -- --testTimeout=10000; then
             echo "Connection successful, tests passed."
             break
           else
