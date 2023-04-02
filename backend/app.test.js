@@ -11,15 +11,12 @@ describe('API tests', () => {
 
   afterAll(() => {
     server.close();
+    pool.end(); // Close the PostgreSQL connection
   });
 
   test('Server should respond with status 200 on root path', async () => {
     const response = await request(server).get('/');
     expect(response.statusCode).toBe(200);
   });
-  
-afterAll(() => {
-  pool.end(); // Close the PostgreSQL connection
-});
 
 });
