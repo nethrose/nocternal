@@ -82,7 +82,7 @@ jobs:
           response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
-          ruleExists=$(echo "$response" | jq '.firewall | .rules? | .[]? | select(.sources[] == "${{ steps.runner-ip.outputs.ip }}")')
+          ruleExists=$(echo "$response" | jq '.firewall | .rules? | .[]? | select(.sources == "'$RUNNER_IP'")')
           if [ -n "$ruleExists" ]; then
             echo "Trusted source added successfully."
             exit 0
