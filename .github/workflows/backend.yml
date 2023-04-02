@@ -81,7 +81,7 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
         echo "$response" | jq --arg ip "$RUNNER_IP" 'any(.rules[]; .type == "ip_addr" and .value == $ip)' | grep "true" || exit 1
-
+    
     - name: Run tests
       env:
         DATABASE_ID: ${{ secrets.DATABASE_ID }}
@@ -97,7 +97,9 @@ jobs:
         # Set the updated connection string and run tests
         export DATABASE_URL="$connection_string"
         cd backend
+        echo "DATABASE_URL=$DATABASE_URL" > .env
         npm run test
+
 
     - name: Start the application
       env:
