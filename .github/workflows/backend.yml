@@ -1,21 +1,13 @@
 name: Backend CI
 
 on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'backend/**'
   push:
-    branches:
-      - main
     paths:
       - 'backend/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
@@ -23,9 +15,15 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: 16
+        node-version: 14
 
-    - name: Generate package.json
+    - name: Install dependencies
+      run: cd backend && npm ci
+
+    - name: Run tests
+      run: cd backend && npm test
+
+    - name: Create package.json
       run: |
         cd backend
         echo '{
@@ -34,52 +32,50 @@ jobs:
           "scripts": {
             "start": "node app.js",
             "test": "jest"
-        },
+          },
           "dependencies": {
             "cors": "^2.8.5",
             "dotenv": "^10.0.0",
             "express": "^4.17.1",
             "pg": "^8.7.1"
-        },
-        "devDependencies": {
-          "jest": "^27.4.7",
-          "supertest": "^6.3.0"
-        },
-        "jest": {
-          "testMatch": [
-            "**/backend/**/?(*.)+(spec|test).[tj]s?(x)"
-          ]
-        }
+          },
+          "devDependencies": {
+            "jest": "^27.4.7",
+            "supertest": "^6.3.0"            
+          }
         }' > package.json
 
-    - name: Install dependencies
-      run: |
-        cd backend
-        npm install
-    
-    - name: Validate database connection
-      run: |
-        cd backend
-        node app.js
+    - name: Get the runner's public IP
+      id: ip
+      uses: haythem/public-ip@v1
 
-    - name: Run tests
+    - name: Add trusted source to DigitalOcean database
       run: |
-        cd backend
-        npm test
-      env:
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_PORT: ${{ secrets.DB_PORT }}
+        curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+        -d '{"ip": "${{ steps.ip.outputs.public_ip }}", "type": "github_runner"}' \
+        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall"
 
     - name: Start the application
+      run: cd backend && npm start &
+
+    - name: Wait for application to connect
       run: |
-        cd backend
-        npm start
-      env:
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_PORT: ${{ secrets.DB_PORT }}
+        timeout=60
+        interval=5
+        elapsed=0
+        app_url="http://localhost:${{ env.PORT }}"
+        while [[ $(curl -s -o /dev/null -w "%{http_code}" "$app_url") != "200" ]]; do
+          if [[ $elapsed -ge $timeout ]]; then
+            echo "Application did not start within ${timeout}s"
+            exit 1
+          fi
+          sleep $interval
+          elapsed=$((elapsed + interval))
+        done
+
+    - name: Remove trusted source from DigitalOcean database
+      run: |
+        RULE_ID=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" | jq '.rules[] | select(.type == "github_runner") | .uuid')
+        curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
+        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall/$RULE_ID"
