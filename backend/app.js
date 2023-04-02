@@ -18,19 +18,17 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-app.get('/', (req, res) => {
-  res.status(200).send('Server is running');
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error('Error connecting to the database:', err.stack);
+  } else {
+    console.log('Connected to the database');
+  }
+  release();
 });
-
-// You can add other middleware, route handlers, and configurations above this line.
 
 const PORT = process.env.PORT || 3001;
-// Change the line where you listen to the server to assign it to a constant 'server'
-const server = app.listen(PORT, () => {
+
+app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-
-// Export the 'server' constant, so it can be used in your test file
-module.exports = server;
-
-//edit this file to trigger the Backend CI
