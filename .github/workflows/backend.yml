@@ -81,7 +81,7 @@ jobs:
           response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
-          echo "$response" | jq '.rules[] | select(.sources[] == "${{ steps.runner-ip.outputs.ip }}")' | grep -q "${{ steps.runner-ip.outputs.ip }}" && echo "Trusted source verified" && exit 0
+          echo "$response" | jq '.firewall.rules[] | select(.sources[] == "${{ steps.runner-ip.outputs.ip }}")' | grep -q "${{ steps.runner-ip.outputs.ip }}" && echo "Trusted source verified" && exit 0
           echo "Trusted source not found. Retrying in 10 seconds..."
           sleep 10
         done
