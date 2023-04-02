@@ -30,9 +30,10 @@ jobs:
         response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "ip_addr", "value": "${RUNNER_IP}"}]}')
+        -d "{\"rules\": [{\"type\": \"ip_addr\", \"value\": \"${RUNNER_IP}\"}]}")
         echo "$response"
         echo "$response" | grep "HTTP/2 201" || exit 1
+
 
     - name: Verify trusted source
       env:
@@ -52,6 +53,6 @@ jobs:
         response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "ip_addr", "value": "${RUNNER_IP}"}]}')
+        -d "{\"rules\": [{\"type\": \"ip_addr\", \"value\": \"${RUNNER_IP}\"}]}")
         echo "$response"
         echo "$response" | grep "HTTP/2 201" || exit 1
