@@ -58,6 +58,12 @@ jobs:
         curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" -d '{"type": "ip_addr", "value": "'"$IP_ADDRESS"'", "name": "'"$TRUSTED_SOURCE_NAME"'"}' "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall"
 
     - name: Start the application
+      env:
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USERNAME: ${{ secrets.DB_USERNAME }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_PORT: ${{ secrets.DB_PORT }}
       run: |
         cd backend
         timeout 5s npm start || true
