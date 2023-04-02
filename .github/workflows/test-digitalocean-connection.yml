@@ -27,7 +27,6 @@ jobs:
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
         current_rules=$(echo "$response" | jq '.rules')
         echo "CURRENT_RULES=$(echo $current_rules | base64 --wrap=0)" >> $GITHUB_ENV
-
     - name: Add trusted source
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
@@ -39,7 +38,6 @@ jobs:
         -d "{\"rules\": $updated_rules}")
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
-
     - name: Verify trusted source added
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
@@ -48,7 +46,29 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
         echo "$response" | jq --arg ip "$RUNNER_IP" 'any(.rules[]; .type == "ip_addr" and .value == $ip)' | grep "true" || exit 1
-
+    - name: Get connection details
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
+        echo "CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection' | base64 --wrap=0)" >> $GITHUB_ENV
+    - name: Check connection string
+      run: |
+        connection_string=$(echo "$CONNECTION_DETAILS" | base64 --decode | jq -r '.uri')
+        echo "Connection string: ${connection_string/://:***@}"
+    - name: Install PostgreSQL client
+      run: sudo apt-get install -y postgresql-client
+    - name: Display PostgreSQL version and configuration
+      run: |
+        connection_string=$(echo "$CONNECTION_DETAILS" | base64 --decode | jq -r '.uri')
+        PGPASSWORD=$(echo "$CONNECTION_DETAILS" | base64 --decode | jq -r '.password') psql "$connection_string" -c 'SELECT version();'
+        PGPASSWORD=$(echo "$CONNECTION_DETAILS" | base64 --decode | jq -r '.password') psql "$connection_string" -c 'SHOW ALL;'
+    - name: Run tests
+      run: |
+        # Add your test commands here
+        echo "Running tests..."
     - name: Remove trusted source
       if: always()
       env:
@@ -61,3 +81,4 @@ jobs:
         -d "{\"rules\": $updated_rules}")
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
+
