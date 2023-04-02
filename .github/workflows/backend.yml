@@ -82,13 +82,19 @@ jobs:
           response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
-          current_rules=$(echo "$response" | jq '.firewall.rules')
-          ruleExists=$(echo "$current_rules" | jq 'map(select(.value == "'$RUNNER_IP'")) | length')
-          if [ $ruleExists -gt 0 ]; then
-            echo "Trusted source added successfully."
-            exit 0
+          rules_exist=$(echo "$response" | jq 'has("firewall") and has("rules")')
+          if [ "$rules_exist" == "true" ]; then
+            current_rules=$(echo "$response" | jq '.firewall.rules')
+            ruleExists=$(echo "$current_rules" | jq 'map(select(.value == "'$RUNNER_IP'")) | length')
+            if [ $ruleExists -gt 0 ]; then
+              echo "Trusted source added successfully."
+              exit 0
+            else
+              echo "Trusted source not added yet. Retrying in 3 seconds."
+              sleep 3
+            fi
           else
-            echo "Trusted source not added yet. Retrying in 3 seconds."
+            echo "No rules found. Retrying in 3 seconds."
             sleep 3
           fi
         done
