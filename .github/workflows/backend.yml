@@ -2,65 +2,82 @@ name: Backend CI
 
 on:
   push:
-    branches-ignore:
-      - main
+    paths:
+      - 'backend/**'
+  pull_request:
     paths:
       - 'backend/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-
-    - name: Set up Node.js
+      
+    - name: Setup Node.js environment
       uses: actions/setup-node@v2
       with:
         node-version: 14
-
+        
     - name: Install dependencies
       run: |
         cd backend
-        npm ci
+        echo '{
+          "name": "backend",
+          "version": "1.0.0",
+          "scripts": {
+            "start": "node app.js",
+            "test": "jest"
+          },
+          "dependencies": {
+            "cors": "^2.8.5",
+            "dotenv": "^10.0.0",
+            "express": "^4.17.1",
+            "pg": "^8.7.1"
+          },
+          "devDependencies": {
+            "jest": "^27.4.7",
+            "supertest": "^6.3.0"
+          }
+        }' > package.json
+        npm install
 
     - name: Run tests
       run: |
         cd backend
-        npm test
+        npm run test
 
     - name: Add trusted source
-      env:
-        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        IP=$(curl -s https://api.github.com/meta | jq '.actions[]' -r)
-        DATABASE_ID=${{ secrets.DATABASE_ID }}
-        for ip in $IP; do
-          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" -d "{\"type\":\"ip_addr\",\"value\":\"$ip\"}" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall"
-        done
+        export IP_ADDRESS=$(curl -s http://whatismyip.akamai.com)
+        export DATABASE_ID=${{ secrets.DATABASE_ID }}
+        export DO_API_TOKEN=${{ secrets.DO_API_TOKEN }}
+        export TRUSTED_SOURCE_NAME="Github Actions Runner"
+        curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" -d '{"type": "ip_addr", "value": "'"$IP_ADDRESS"'", "name": "'"$TRUSTED_SOURCE_NAME"'"}' "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall"
 
     - name: Start the application
       run: |
         cd backend
-        npm start &
+        timeout 5s npm start || true
 
-    - name: Wait for the application to start
+    - name: Check if app is running
+      id: check_app
       run: |
         cd backend
-        until $(curl --output /dev/null --silent --head --fail http://localhost:3001); do
-          printf '.'
+        for i in {1..10}; do
+          curl -s -o /dev/null -w '%{http_code}' http://localhost:3001 | grep -q 200 && echo "App is running" && exit 0
           sleep 5
         done
-
+        echo "App is not running"
+        exit 1
+        
     - name: Remove trusted source
-      env:
-        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      if: always()
       run: |
-        IP=$(curl -s https://api.github.com/meta | jq '.actions[]' -r)
-        DATABASE_ID=${{ secrets.DATABASE_ID }}
-        RULES=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall" | jq '.rules[] | .uuid' -r)
-        for rule_uuid in $RULES; do
-          for ip in $IP; do
-            curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall/$rule_uuid"
-          done
-        done
+        export IP_ADDRESS=$(curl -s http://whatismyip.akamai.com)
+        export DATABASE_ID=${{ secrets.DATABASE_ID }}
+        export DO_API_TOKEN=${{ secrets.DO_API_TOKEN }}
+        export TRUSTED_SOURCE_ID=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall" | jq -r --arg IP_ADDRESS "$IP_ADDRESS" '.rules[] | select(.value == $IP_ADDRESS) | .uuid')
+        curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall/$TRUSTED_SOURCE_ID"
