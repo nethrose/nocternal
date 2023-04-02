@@ -105,8 +105,8 @@ jobs:
         echo "DB_PASSWORD=$DB_PASSWORD" >> .env
         echo "DB_PORT=$DB_PORT" >> .env
         # Retry connection attempts
-        MAX_ATTEMPTS=5
-        SLEEP_TIME=30
+        MAX_ATTEMPTS=3
+        SLEEP_TIME=10
         attempt=1
         while [[ $attempt -le $MAX_ATTEMPTS ]]; do
           echo "Connection attempt $attempt..."
