@@ -44,15 +44,34 @@ jobs:
         }' > package.json
         npm install
         
+    - name: Get runner IP
+      id: get-ip
+      run: echo "RUNNER_IP=$(curl -s https://ipinfo.io/ip)" >> $GITHUB_ENV
+
+    - name: Install jq
+      run: sudo apt-get install jq
+
+    - name: Get current trusted sources
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
+        current_rules=$(echo "$response" | jq '.rules')
+        echo "CURRENT_RULES=$(echo $current_rules | base64 --wrap=0)" >> $GITHUB_ENV
+
     - name: Add trusted source
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        response=$(curl -i -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        updated_rules=$(echo $CURRENT_RULES | base64 --decode | jq --arg ip "$RUNNER_IP" '. + [{"type": "ip_addr", "value": $ip}]')
+        response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
+        -d "{\"rules\": $updated_rules}")
         echo "$response"
+        echo "$response" | grep "HTTP/2 204" || exit 1
 
     - name: Run tests
       env:
@@ -75,7 +94,7 @@ jobs:
       run: |
         cd backend
         timeout 5s npm start || true
-
+        
     - name: Check if app is running
       id: check_app
       run: |
@@ -92,7 +111,10 @@ jobs:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       if: always()
       run: |
-        curl -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
+        updated_rules=$(echo $CURRENT_RULES | base64 --decode | jq --arg ip "$RUNNER_IP" 'map(select(.value != $ip))')
+        response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
+        -d "{\"rules\": $updated_rules}")
+        echo "$response"
+        echo "$response" | grep "HTTP/2 204" || exit 1
