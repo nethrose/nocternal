@@ -9,6 +9,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const startServer = () => {
+  const PORT = process.env.PORT || 3001;
+  const server = app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+  return server;
+};
+
 // PostgreSQL connection
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -24,12 +32,11 @@ pool.connect((err, client, release) => {
   } else {
     console.log('Connected to the database');
   }
-  release();
 });
 
 const PORT = process.env.PORT || 3001;
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-// editing this file to trigger the backend ci
+
+module.exports = { app, startServer };
