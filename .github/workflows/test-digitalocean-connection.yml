@@ -30,7 +30,7 @@ jobs:
         response=$(curl -i -X PUT "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
+        -d '{"rules": [{"type": "database", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
         echo "$response"
         echo "$response" | grep "HTTP/2 201" || exit 1
 
@@ -57,6 +57,6 @@ jobs:
         response=$(curl -i -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
+        -d '{"rules": [{"type": "database", "ports": "5432", "sources": ["${RUNNER_IP}"]}]}')
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
