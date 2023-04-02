@@ -12,13 +12,12 @@ describe('API tests', () => {
     console.log('Connected to the database for testing');
   });
 
+  // Pass the custom timeout value of 20000 ms as the second argument to afterAll
   afterAll(async () => {
-    // Add a custom timeout for the afterAll hook
-    jest.setTimeout(20000);
     server.close();
     console.log('Server closed after testing');
     await pool.end(); // Close the PostgreSQL connection
-  });
+  }, 20000);
 
   test('Server should respond with status 200 on root path', async () => {
     const response = await request(server).get('/');
