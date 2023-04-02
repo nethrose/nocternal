@@ -1,6 +1,5 @@
 const request = require('supertest');
-const { app, startServer } = require('./app');
-const { pool } = require('./app');
+const { app, startServer, pool } = require('./app');
 
 let server;
 
@@ -8,11 +7,11 @@ describe('API tests', () => {
   beforeAll(async () => {
     console.log('Server started for testing');
     server = startServer();
-    await pool.connect();
+    const client = await pool.connect();
     console.log('Connected to the database for testing');
+    client.release();
   });
 
-  // Pass the custom timeout value of 20000 ms as the second argument to afterAll
   afterAll(async () => {
     server.close();
     console.log('Server closed after testing');
