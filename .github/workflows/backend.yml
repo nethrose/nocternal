@@ -92,19 +92,34 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DO_API_TOKEN")
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
-        host=$(echo "$CONNECTION_DETAILS" | jq -r '.host')
-        port=$(echo "$CONNECTION_DETAILS" | jq -r '.port')
-        user=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
-        password=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
-        database=$(echo "$CONNECTION_DETAILS" | jq -r '.database')
-        # Set the environment variables and run tests
-        export DB_HOST="$host"
-        export DB_PORT="$port"
-        export DB_USERNAME="$user"
-        export DB_PASSWORD="$password"
-        export DB_NAME="$database"
+        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
+        # Set the updated connection string and run tests
+        export DATABASE_URL="$connection_string"
         cd backend
-        npm run test
+        echo "DATABASE_URL=$DATABASE_URL" > .env
+
+        # Retry connection attempts
+        MAX_ATTEMPTS=5
+        SLEEP_TIME=30
+        attempt=1
+
+        while [[ $attempt -le $MAX_ATTEMPTS ]]; do
+          echo "Connection attempt $attempt..."
+          if npm run test; then
+            echo "Connection successful, tests passed."
+            break
+          else
+            if [[ $attempt -eq $MAX_ATTEMPTS ]]; then
+              echo "All attempts failed. Exiting."
+              exit 1
+            else
+              echo "Connection failed, retrying in ${SLEEP_TIME} seconds..."
+              sleep $SLEEP_TIME
+              ((attempt++))
+            fi
+          fi
+        done
+
 
     - name: Start the application
       env:
