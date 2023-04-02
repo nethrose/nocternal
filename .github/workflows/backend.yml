@@ -87,8 +87,8 @@ jobs:
             echo "Trusted source added successfully."
             exit 0
           else
-            echo "Trusted source not added yet. Retrying in 3 seconds."
-            sleep 3
+            echo "Trusted source not added yet. Retrying in 10 seconds."
+            sleep 10
           fi
         done
         echo "Trusted source could not be verified."
