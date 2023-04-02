@@ -48,7 +48,7 @@ jobs:
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        response=$(curl -i -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
+        response=$(curl -i -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
         -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}')
@@ -92,7 +92,7 @@ jobs:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       if: always()
       run: |
-        curl -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
+        curl -X DELETE "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
         -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
