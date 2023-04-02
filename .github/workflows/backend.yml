@@ -82,13 +82,13 @@ jobs:
           response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN")
-          ruleExists=$(echo "$response" | jq '.firewall.rules // [] | .[]? | select(.sources[] == "${{ steps.runner-ip.outputs.ip }}")')
+          ruleExists=$(echo "$response" | jq '.firewall | .rules? | .[]? | select(.sources[] == "${{ steps.runner-ip.outputs.ip }}")')
           if [ -n "$ruleExists" ]; then
             echo "Trusted source added successfully."
             exit 0
           else
-            echo "Trusted source not added yet. Retrying in 10 seconds."
-            sleep 10
+            echo "Trusted source not added yet. Retrying in 3 seconds."
+            sleep 3
           fi
         done
         echo "Trusted source could not be verified."
