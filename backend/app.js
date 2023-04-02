@@ -18,9 +18,17 @@ const pool = new Pool({
   port: process.env.DB_PORT,
 });
 
-const PORT = process.env.PORT || 3001;
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running');
+});
 
-app.listen(PORT, () => {
+// You can add other middleware, route handlers, and configurations above this line.
+
+const PORT = process.env.PORT || 3001;
+// Change the line where you listen to the server to assign it to a constant 'server'
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
-// editing this comment to test to trigger backend CI workflow
+
+// Export the 'server' constant, so it can be used in your test file
+module.exports = server;
