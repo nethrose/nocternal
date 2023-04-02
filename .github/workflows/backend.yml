@@ -92,14 +92,19 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DO_API_TOKEN")
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
-        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
-
-        # Set the updated connection string and run tests
-        export DATABASE_URL="$connection_string"
+        host=$(echo "$CONNECTION_DETAILS" | jq -r '.host')
+        port=$(echo "$CONNECTION_DETAILS" | jq -r '.port')
+        user=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
+        password=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
+        database=$(echo "$CONNECTION_DETAILS" | jq -r '.database')
+        # Set the environment variables and run tests
+        export DB_HOST="$host"
+        export DB_PORT="$port"
+        export DB_USERNAME="$user"
+        export DB_PASSWORD="$password"
+        export DB_NAME="$database"
         cd backend
-        echo "DATABASE_URL=$DATABASE_URL" > .env
         npm run test
-
 
     - name: Start the application
       env:
