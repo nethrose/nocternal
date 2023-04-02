@@ -2,6 +2,8 @@ name: Backend CI
 
 on:
   push:
+    branches-ignore:
+      - main
     paths:
       - 'backend/**'
 
@@ -18,64 +20,47 @@ jobs:
         node-version: 14
 
     - name: Install dependencies
-      run: cd backend && npm ci
-
-    - name: Run tests
-      run: cd backend && npm test
-
-    - name: Create package.json
       run: |
         cd backend
-        echo '{
-          "name": "backend",
-          "version": "1.0.0",
-          "scripts": {
-            "start": "node app.js",
-            "test": "jest"
-          },
-          "dependencies": {
-            "cors": "^2.8.5",
-            "dotenv": "^10.0.0",
-            "express": "^4.17.1",
-            "pg": "^8.7.1"
-          },
-          "devDependencies": {
-            "jest": "^27.4.7",
-            "supertest": "^6.3.0"            
-          }
-        }' > package.json
+        npm ci
 
-    - name: Get the runner's public IP
-      id: ip
-      uses: haythem/public-ip@v1
-
-    - name: Add trusted source to DigitalOcean database
+    - name: Run tests
       run: |
-        curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
-        -d '{"ip": "${{ steps.ip.outputs.public_ip }}", "type": "github_runner"}' \
-        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall"
+        cd backend
+        npm test
 
-    - name: Start the application
-      run: cd backend && npm start &
-
-    - name: Wait for application to connect
+    - name: Add trusted source
+      env:
+        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        timeout=60
-        interval=5
-        elapsed=0
-        app_url="http://localhost:${{ env.PORT }}"
-        while [[ $(curl -s -o /dev/null -w "%{http_code}" "$app_url") != "200" ]]; do
-          if [[ $elapsed -ge $timeout ]]; then
-            echo "Application did not start within ${timeout}s"
-            exit 1
-          fi
-          sleep $interval
-          elapsed=$((elapsed + interval))
+        IP=$(curl -s https://api.github.com/meta | jq '.actions[]' -r)
+        DATABASE_ID=${{ secrets.DATABASE_ID }}
+        for ip in $IP; do
+          curl -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" -d "{\"type\":\"ip_addr\",\"value\":\"$ip\"}" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall"
         done
 
-    - name: Remove trusted source from DigitalOcean database
+    - name: Start the application
       run: |
-        RULE_ID=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
-        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" | jq '.rules[] | select(.type == "github_runner") | .uuid')
-        curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer ${{ secrets.DO_API_TOKEN }}" \
-        "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall/$RULE_ID"
+        cd backend
+        npm start &
+
+    - name: Wait for the application to start
+      run: |
+        cd backend
+        until $(curl --output /dev/null --silent --head --fail http://localhost:3001); do
+          printf '.'
+          sleep 5
+        done
+
+    - name: Remove trusted source
+      env:
+        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        IP=$(curl -s https://api.github.com/meta | jq '.actions[]' -r)
+        DATABASE_ID=${{ secrets.DATABASE_ID }}
+        RULES=$(curl -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall" | jq '.rules[] | .uuid' -r)
+        for rule_uuid in $RULES; do
+          for ip in $IP; do
+            curl -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer $DO_API_TOKEN" "https://api.digitalocean.com/v2/databases/$DATABASE_ID/firewall/$rule_uuid"
+          done
+        done
