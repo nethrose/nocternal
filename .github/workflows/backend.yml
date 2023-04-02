@@ -43,6 +43,15 @@ jobs:
           }
         }' > package.json
         npm install
+        
+    - name: Add trusted source
+      env:
+        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
+      run: |
+        curl -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
+        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
 
     - name: Run tests
       env:
@@ -54,15 +63,6 @@ jobs:
       run: |
         cd backend
         npm run test
-  
-    - name: Add trusted source
-      env:
-        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
-      run: |
-        curl -X POST "https://api.digitalocean.com/v2/databases/${{ secrets.DB_ID }}/firewall" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $DIGITALOCEAN_ACCESS_TOKEN" \
-        -d '{"rules": [{"type": "tcp", "ports": "5432", "sources": ["${{ steps.runner-ip.outputs.ip }}"]}]}'
 
     - name: Start the application
       env:
