@@ -92,14 +92,12 @@ jobs:
         -H "Content-Type: application/json" \
         -H "Authorization: Bearer $DO_API_TOKEN")
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
+        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
 
-        # Set environment variables with the connection string and credentials
-        export CONNECTION_STRING=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
-        export DB_USER=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
-        export DB_PASSWORD=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
-
-        # Add your test commands here
-        echo "Running tests..."
+        # Set the updated connection string and run tests
+        export DATABASE_URL="$connection_string"
+        cd backend
+        npm run test
 
     - name: Start the application
       env:
@@ -113,9 +111,10 @@ jobs:
         CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
         connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
 
-        # Start the application with the updated connection string
+        # Set the updated connection string and start the application
         export DATABASE_URL="$connection_string"
-        npm start
+        cd backend
+        timeout 5s npm start || true
         
     - name: Check if app is running
       id: check_app
