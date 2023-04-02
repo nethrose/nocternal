@@ -56,6 +56,11 @@ jobs:
       run: |
         cd backend
         npm install
+    
+    - name: Validate database connection
+      run: |
+        cd backend
+        node app.js
 
     - name: Run tests
       run: |
