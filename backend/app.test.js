@@ -6,17 +6,18 @@ let server;
 
 describe('API tests', () => {
   beforeAll(async () => {
-    server = startServer();
     console.log('Server started for testing');
-    const connection = await pool.connect();
+    server = startServer();
+    await pool.connect();
     console.log('Connected to the database for testing');
   });
 
   afterAll(async () => {
+    // Add a custom timeout for the afterAll hook
+    jest.setTimeout(20000);
     server.close();
     console.log('Server closed after testing');
     await pool.end(); // Close the PostgreSQL connection
-    console.log('Database connection closed after testing');
   });
 
   test('Server should respond with status 200 on root path', async () => {
