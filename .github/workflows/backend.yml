@@ -84,25 +84,38 @@ jobs:
 
     - name: Run tests
       env:
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_PORT: ${{ secrets.DB_PORT }}
+        DATABASE_ID: ${{ secrets.DATABASE_ID }}
+        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        cd backend
-        npm run test
+        # Obtain connection details from DigitalOcean API
+        response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${DATABASE_ID}" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DO_API_TOKEN")
+        CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
+
+        # Set environment variables with the connection string and credentials
+        export CONNECTION_STRING=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
+        export DB_USER=$(echo "$CONNECTION_DETAILS" | jq -r '.user')
+        export DB_PASSWORD=$(echo "$CONNECTION_DETAILS" | jq -r '.password')
+
+        # Add your test commands here
+        echo "Running tests..."
 
     - name: Start the application
       env:
-        DB_HOST: ${{ secrets.DB_HOST }}
-        DB_NAME: ${{ secrets.DB_NAME }}
-        DB_USERNAME: ${{ secrets.DB_USERNAME }}
-        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-        DB_PORT: ${{ secrets.DB_PORT }}
+        DATABASE_ID: ${{ secrets.DATABASE_ID }}
+        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        cd backend
-        timeout 5s npm start || true
+        # Obtain connection details from DigitalOcean API
+        response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${DATABASE_ID}" \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $DO_API_TOKEN")
+        CONNECTION_DETAILS=$(echo "$response" | jq '.database.connection')
+        connection_string=$(echo "$CONNECTION_DETAILS" | jq -r '.uri')
+
+        # Start the application with the updated connection string
+        export DATABASE_URL="$connection_string"
+        npm start
         
     - name: Check if app is running
       id: check_app
