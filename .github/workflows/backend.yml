@@ -61,7 +61,7 @@ jobs:
         current_rules=$(echo "$response" | jq '.rules')
         echo "CURRENT_RULES=$(echo $current_rules | base64 --wrap=0)" >> $GITHUB_ENV
 
-    - name: Add trusted source
+    - name: Add and verify trusted source
       env:
         DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
@@ -72,12 +72,8 @@ jobs:
         -d "{\"rules\": $updated_rules}")
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
-    
-    - name: Verify trusted source
-      env:
-        DIGITALOCEAN_ACCESS_TOKEN: ${{ secrets.DO_API_TOKEN }}
-      id: verify
-      run: |
+
+        # Verify
         for i in {1..5}; do
           response=$(curl -s -X GET "https://api.digitalocean.com/v2/databases/${{ secrets.DATABASE_ID }}/firewall" \
             -H "Content-Type: application/json" \
@@ -87,7 +83,7 @@ jobs:
             current_rules=$(echo "$response" | jq '.firewall.rules')
             ruleExists=$(echo "$current_rules" | jq 'map(select(.value == "'$RUNNER_IP'")) | length')
             if [ $ruleExists -gt 0 ]; then
-              echo "Trusted source added successfully."
+              echo "Trusted source added and verified successfully."
               exit 0
             else
               echo "Trusted source not added yet. Retrying in 3 seconds."
