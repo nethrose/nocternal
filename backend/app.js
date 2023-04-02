@@ -39,4 +39,4 @@ pool.connect((err, client, release) => {
 });
 
 module.exports = { app, startServer };
-// editing this file to trigger the backend ci
+// edit this file to trigger the backend ci
