@@ -1,7 +1,13 @@
 const request = require('supertest');
-const server = require('./app');
+const { app, startServer } = require('./app');
+
+let server;
 
 describe('API tests', () => {
+  beforeAll(() => {
+    server = startServer();
+  });
+
   afterAll(() => {
     server.close();
   });
