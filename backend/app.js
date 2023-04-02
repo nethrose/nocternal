@@ -1,47 +1,23 @@
-// editing this file to trigger the backend ci
-
 const express = require('express');
-const cors = require('cors');
-const dotenv = require('dotenv');
 const { Pool } = require('pg');
 
-dotenv.config();
-
 const app = express();
-app.use(cors());
-app.use(express.json());
+const pool = new Pool();
 
 app.get('/', (req, res) => {
   res.status(200).send('Hello, world!');
 });
 
 const startServer = () => {
-  const PORT = process.env.PORT || 3001;
-  const server = app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  const server = app.listen(3001, () => {
+    console.log('Server is running on port 3001');
   });
+
   return server;
 };
 
-// PostgreSQL connection
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
-
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('Error connecting to the database:', err.stack);
-  } else {
-    console.log('Connected to the database');
-  }
-});
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
 
 module.exports = { app, startServer, pool };
-
