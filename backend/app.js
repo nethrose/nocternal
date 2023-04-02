@@ -30,6 +30,9 @@ const pool = new Pool({
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
 
 pool.connect((err, client, release) => {
@@ -41,3 +44,4 @@ pool.connect((err, client, release) => {
 });
 
 module.exports = { app, startServer, pool };
+
