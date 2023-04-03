@@ -1,4 +1,3 @@
-// edit this comment to trigger the backend CI workflow
 const express = require('express');
 const { Pool } = require('pg');
 
@@ -22,8 +21,6 @@ const startServer = () => {
   const server = app.listen(3001, () => {
     console.log('Server is running on port 3001');
   });
-  
-  pool = new Pool(config);
 
   return server;
 };
