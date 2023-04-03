@@ -84,6 +84,7 @@ jobs:
     
     - name: Run tests
       env:
+        NODE_ENV: test
         DATABASE_ID: ${{ secrets.DATABASE_ID }}
         DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
