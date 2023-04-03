@@ -28,6 +28,9 @@ tracerProvider.register();
 
 // Initialize the Meter Provider
 const meterProvider = new MeterProvider();
+const ingestRequestCounter = meter.createCounter('ingest_requests_total', {
+  description: 'Total number of successful requests to the /ingest endpoint',
+});
 
 // Register the instrumentations
 registerInstrumentations({
