@@ -26,10 +26,13 @@ app.post('/ingest', (req, res) => {
   const span = trace.getTracer('backend').startSpan('ingest');
   // Ingest and process the OpenTelemetry data.
   // You can use the OpenTelemetry Collector or implement custom processing logic.
-  
-  // Increment the counter for successful requests
-  ingest
 
+  // Increment the counter for successful requests
+  ingestRequestCounter.add(1);
+
+  span.end();
+  res.sendStatus(200);
+});
 
 const startServer = () => {
   const server = app.listen(3001, () => {
