@@ -1,0 +1,33 @@
+name: Generate Package Files
+
+on:
+  workflow_dispatch:
+  
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14
+
+    - name: Generate package.json
+      run: npm init -y
+      working-directory: backend
+
+    - name: Install dependencies
+      run: npm install express pg jest supertest
+      working-directory: backend
+
+    - name: Print package.json content
+      run: cat package.json
+      working-directory: backend
+
+    - name: Print package-lock.json content
+      run: cat package-lock.json
+      working-directory: backend
