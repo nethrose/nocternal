@@ -1,0 +1,43 @@
+name: Backend Generate package-lock.json
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: 16.x
+
+    - name: Update npm
+      run: npm install -g npm@latest
+
+    - name: Change to backend directory
+      run: cd backend
+
+    - name: Create package.json
+      run: echo '{ "name": "backend", "version": "1.0.0", "description": "", "main": "app.js", "scripts": { "test": "echo \"Error: no test specified\" && exit 1" }, "dependencies": { "express": "^4.17.1", "pg": "^8.7.1" }, "devDependencies": {}, "author": "", "license": "ISC" }' > package.json
+      working-directory: backend
+
+    - name: Install dependencies
+      run: npm install
+      working-directory: backend
+      
+    - name: Regenerate package-lock.json
+      run: npm install --package-lock-only
+      working-directory: backend
+
+    - name: Commit package.json and package-lock.json
+      run: |
+        git config --global user.name 'GitHub Action'
+        git config --global user.email 'action@github.com'
+        git add backend/package.json backend/package-lock.json
+        git commit -m 'Update backend package.json and package-lock.json'
+        git push
