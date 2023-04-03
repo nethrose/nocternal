@@ -1,6 +1,12 @@
 name: Front End Generate package-lock.json
 
 on:
+  push:
+    paths:
+      - 'package.json'
+  pull_request:
+    paths:
+      - 'package.json'
   workflow_dispatch:
 
 jobs:
