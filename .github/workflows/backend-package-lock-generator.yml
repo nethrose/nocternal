@@ -2,6 +2,12 @@ name: Backend Generate package-lock.json
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'backend/package.json'
+  pull_request:
+    paths:
+      - 'backend/package.json'
 
 jobs:
   build:
