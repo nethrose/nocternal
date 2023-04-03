@@ -45,7 +45,8 @@ jobs:
             "@opentelemetry/exporter-trace-otlp-http": "^0.37.0",
             "@opentelemetry/exporter-metrics-otlp-http": "^0.37.0",
             "@opentelemetry/sdk-trace-node": "^1.11.0",
-            "@opentelemetry/sdk-trace-base": "^1.11.0"
+            "@opentelemetry/sdk-trace-base": "^1.11.0",
+            "@opentelemetry/auto-instrumentations-node": "^0.36.4"
           },
           "devDependencies": {
             "jest": "^27.4.7",
