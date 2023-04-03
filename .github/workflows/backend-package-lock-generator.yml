@@ -19,11 +19,24 @@ jobs:
     - name: Update npm
       run: npm install -g npm@latest
 
-    - name: Change to backend directory
-      run: cd backend
-
     - name: Create package.json
-      run: echo '{ "name": "backend", "version": "1.0.0", "description": "", "main": "app.js", "scripts": { "test": "echo \"Error: no test specified\" && exit 1" }, "dependencies": { "express": "^4.17.1", "pg": "^8.7.1" }, "devDependencies": {}, "author": "", "license": "ISC" }' > package.json
+      run: |
+        echo '{
+          "name": "backend",
+          "version": "1.0.0",
+          "description": "",
+          "main": "app.js",
+          "scripts": {
+            "test": "echo \\"Error: no test specified\\" && exit 1"
+          },
+          "dependencies": {
+            "express": "^4.17.1",
+            "pg": "^8.7.1"
+          },
+          "devDependencies": {},
+          "author": "",
+          "license": "ISC"
+        }' > package.json
       working-directory: backend
 
     - name: Install dependencies
