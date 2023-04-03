@@ -152,18 +152,11 @@ jobs:
         
     - name: Check if app is running
       id: check_app
-      env:
-        DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
       run: |
-        # Obtain droplet IP address from DigitalOcean API
-        response=$(curl -s -X GET "https://api.digitalocean.com/v2/droplets/${{ secrets.DROPLET_ID }}" \
-        -H "Content-Type: application/json" \
-        -H "Authorization: Bearer $DO_API_TOKEN")
-        DROPLET_IP=$(echo "$response" | jq -r '.droplet.networks.v4[0].ip_address')
-
+        APP_URL="backend.nocternal.net"
         cd backend
         for i in {1..10}; do
-          curl -s -o /dev/null -w '%{http_code}' http://$DROPLET_IP:3001 | grep -q 200 && echo "App is running" && exit 0
+          curl -s -o /dev/null -w '%{http_code}' https://$APP_URL | grep -q 200 && echo "App is running" && exit 0
           sleep 5
         done
         echo "App is not running"
