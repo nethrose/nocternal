@@ -2,6 +2,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const { trace } = require('@opentelemetry/api');
+const { ingestRequestCounter } = require('./tracer');
 
 const app = express();
 const pool = new Pool({
@@ -25,9 +26,10 @@ app.post('/ingest', (req, res) => {
   const span = trace.getTracer('backend').startSpan('ingest');
   // Ingest and process the OpenTelemetry data.
   // You can use the OpenTelemetry Collector or implement custom processing logic.
-  span.end();
-  res.sendStatus(200);
-});
+  
+  // Increment the counter for successful requests
+  ingest
+
 
 const startServer = () => {
   const server = app.listen(3001, () => {
@@ -41,4 +43,4 @@ if (process.env.NODE_ENV !== 'test') {
   startServer();
 }
 
-module.exports = { app, startServer, pool };
+module.exports = { app, startServer, pool, ingestRequestCounter };
