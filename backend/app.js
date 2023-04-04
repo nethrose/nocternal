@@ -2,7 +2,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const { trace } = require('@opentelemetry/api');
-const { ingestRequestCounter } = require('./tracer');
+const { ingestRequestCounter } = require('./utils/tracer');
 
 const app = express();
 const pool = new Pool({
