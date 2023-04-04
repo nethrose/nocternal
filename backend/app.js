@@ -1,7 +1,8 @@
 // edit this line to trigger the backend CI
 const express = require('express');
 const { Pool } = require('pg');
-const { tracer, ingestRequestCounter } = require('./utils/tracer');
+const { tracer } = require('./utils/tracer');
+const { requestCounter } = require('./meter');
 
 const app = express();
 const pool = new Pool({
@@ -27,7 +28,7 @@ app.post('/ingest', (req, res) => {
   // You can use the OpenTelemetry Collector or implement custom processing logic.
 
   // Increment the counter for successful requests
-  ingestRequestCounter.add(1);
+  requestCounter.add(1);
 
   span.end();
   res.sendStatus(200);
@@ -45,4 +46,4 @@ if (process.env.NODE_ENV !== 'test') {
   startServer();
 }
 
-module.exports = { app, startServer, pool, ingestRequestCounter };
+module.exports = { app, startServer, pool, requestCounter };
