@@ -3,7 +3,6 @@ const { registerInstrumentations } = require('@opentelemetry/instrumentation');
 const { Resource } = require('@opentelemetry/resources');
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
 const { BasicTracerProvider, ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
-const { CollectorTraceExporter } = require('@opentelemetry/exporter-collector');
 const { MeterProvider } = require('@opentelemetry/sdk-metrics-base');
 
 // Initialize the Tracer Provider
