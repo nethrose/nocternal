@@ -1,67 +1,29 @@
-const { WebTracerProvider } = require('@opentelemetry/sdk-trace-web');
+const { BasicTracerProvider } = require('@opentelemetry/sdk-trace-base');
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 const { BatchSpanProcessor } = require('@opentelemetry/sdk-trace-base');
-const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
-const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
+const { Resource } = require('@opentelemetry/resources');
+const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
+
+// Define your service name
+const serviceName = 'nocternal-backend'; // Change this to 'nocternal-main' for the main service
 
 // Tracer setup
-const traceProvider = new BasicTracerProvider();
-const traceExporter = new OTLPTraceExporter(traceCollectorOptions);
-traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter));
+const traceProvider = new BasicTracerProvider({
+  resource: new Resource({
+    [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
+  }),
+});
+
+// Configure the OTLPTraceExporter with the appropriate endpoint
+const traceCollectorOptions = {
+  endpoint: 'https://your-opentelemetry-collector-endpoint:port', // Replace with your OpenTelemetry Collector endpoint and port
+};
+
+const otlpTraceExporter = new OTLPTraceExporter(traceCollectorOptions);
+traceProvider.addSpanProcessor(new BatchSpanProcessor(otlpTraceExporter));
 traceProvider.register();
 
-// Metric setup
-const metricExporter = new OTLPMetricExporter(metricCollectorOptions);
-const meterProvider = new MeterProvider({});
-meterProvider.addMetricReader(new PeriodicExportingMetricReader({
-  exporter: metricExporter,
-  exportIntervalMillis: 1000,
-}));
+// Custom tracer
+const tracer = traceProvider.getTracer(serviceName);
 
-// Custom tracer, span, and metric names
-const tracer = traceProvider.getTracer('nocturnal-tracer');
-const meter = meterProvider.getMeter('nocturnal-metrics');
-
-// Create custom metrics
-const pageViewsCounter = meter.createCounter('page_views', {
-  description: 'Counts the number of page views',
-});
-
-const responseTimeHistogram = meter.createHistogram('response_time', {
-  description: 'Records response times in milliseconds',
-  boundaries: [50, 100, 200, 300, 400, 500, 1000],
-});
-
-// Example usage
-function handleRequest(request, response) {
-  const requestSpan = tracer.startSpan('handleRequest', {
-    attributes: {
-      'http.method': request.method,
-      'http.url': request.url,
-    },
-  });
-
-  // Simulate request processing time
-  const processingTime = Math.floor(Math.random() * 1000);
-  setTimeout(() => {
-    responseTimeHistogram.record(processingTime, { 'route': request.url });
-    pageViewsCounter.add(1, { 'route': request.url });
-
-    // End the request span
-    requestSpan.end();
-
-    // Send the response
-    response.send('Request processed.');
-  }, processingTime);
-}
-
-// Example usage with an HTTP server
-const http = require('http');
-const server = http.createServer((req, res) => {
-  handleRequest(req, res);
-});
-
-server.listen(8080, () => {
-  console.log('Server listening on port 8080');
-});
-
+module.exports = { tracer };
