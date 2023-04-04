@@ -22,18 +22,6 @@ app.get('/', (req, res) => {
   res.status(200).send('Hello, world!');
 });
 
-app.post('/ingest', (req, res) => {
-  const span = tracer.startSpan('ingest');
-  // Ingest and process the OpenTelemetry data.
-  // You can use the OpenTelemetry Collector or implement custom processing logic.
-
-  // Increment the counter for successful requests
-  requestCounter.add(1);
-
-  span.end();
-  res.sendStatus(200);
-});
-
 const startServer = () => {
   const server = app.listen(3001, () => {
     console.log('Server is running on port 3001');
