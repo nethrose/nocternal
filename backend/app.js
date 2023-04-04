@@ -1,8 +1,7 @@
 // edit this line to trigger the backend CI
 const express = require('express');
 const { Pool } = require('pg');
-const { trace } = require('@opentelemetry/api');
-const { ingestRequestCounter } = require('./utils/tracer');
+const { tracer, ingestRequestCounter } = require('./tracer');
 
 const app = express();
 const pool = new Pool({
@@ -23,7 +22,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/ingest', (req, res) => {
-  const span = trace.getTracer('backend').startSpan('ingest');
+  const span = tracer.startSpan('ingest');
   // Ingest and process the OpenTelemetry data.
   // You can use the OpenTelemetry Collector or implement custom processing logic.
 
