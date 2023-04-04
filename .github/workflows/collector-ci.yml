@@ -13,22 +13,43 @@ on:
       - 'backend/collector/**'
 
 jobs:
-  build:
+  build_and_test_collector:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Setup Node.js environment
-      uses: actions/setup-node@v2
-      with:
-        node-version: 14
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-    - name: Validate collector configuration
+    - name: Build OpenTelemetry Collector image
+      uses: docker/build-push-action@v2
+      with:
+        context: backend/collector
+        tags: nocternal/otel-collector:test
+
+    - name: Start OpenTelemetry Collector container
       run: |
-        cd backend/collector
-        # You may need to install a YAML linter to validate the configuration file
-        # For example, you can use 'npm install -g yaml-lint' to install the yaml-lint package
-        npm install -g yaml-lint
-        yamllint otel-collector-config.yaml
+        docker run -d --name otel_collector \
+          -v "$(pwd)/backend/collector/otel-collector-config.yaml:/otel-collector-config.yaml" \
+          --expose 55681 \
+          --expose 4317 \
+          nocternal/otel-collector:test \
+          --config otel-collector-config.yaml
+
+    - name: Test collector is running
+      run: |
+        # Allow some time for the collector to start
+        sleep 10
+        # Check if the container is running
+        if ! docker ps | grep otel_collector; then
+          echo "Collector container is not running"
+          exit 1
+        fi
+
+    - name: Stop and remove collector container
+      if: always()
+      run: |
+        docker stop otel_collector
+        docker rm otel_collector
