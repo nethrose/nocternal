@@ -1,4 +1,4 @@
-// editing this line to trigger the backend CI
+// edit this line to trigger the backend CI
 const express = require('express');
 const { Pool } = require('pg');
 const { trace } = require('@opentelemetry/api');
