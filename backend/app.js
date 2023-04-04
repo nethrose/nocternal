@@ -2,7 +2,7 @@
 const express = require('express');
 const { Pool } = require('pg');
 const { tracer } = require('./utils/tracer');
-const { requestCounter } = require('./meter');
+const { requestCounter } = require('./utils/meter');
 
 const app = express();
 const pool = new Pool({
