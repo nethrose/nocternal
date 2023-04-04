@@ -1,7 +1,7 @@
 // edit this line to trigger the backend CI
 const express = require('express');
 const { Pool } = require('pg');
-const { tracer, ingestRequestCounter } = require('./tracer');
+const { tracer, ingestRequestCounter } = require('./utils/tracer');
 
 const app = express();
 const pool = new Pool({
