@@ -1,42 +1,28 @@
-const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
-const { registerInstrumentations } = require('@opentelemetry/instrumentation');
-const { Resource } = require('@opentelemetry/resources');
-const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions');
-const { BasicTracerProvider, ConsoleSpanExporter, SimpleSpanProcessor } = require('@opentelemetry/sdk-trace-base');
+const { WebTracerProvider } = require('@opentelemetry/sdk-trace-web');
+const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
+const { BatchSpanProcessor } = require('@opentelemetry/sdk-trace-base');
+const { MeterProvider, PeriodicExportingMetricReader } = require('@opentelemetry/sdk-metrics');
+const { OTLPMetricExporter } = require('@opentelemetry/exporter-metrics-otlp-http');
 
-// Initialize the Tracer Provider
-const tracerProvider = new BasicTracerProvider({
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: 'nocternal',
-  }),
+// Trace configuration
+const traceProvider = new WebTracerProvider();
+const traceExporter = new OTLPTraceExporter({
+  url: 'http://localhost:4318/v1/traces',
+  headers: {},
+  concurrencyLimit: 10
 });
+traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
+  maxQueueSize: 100,
+  maxExportBatchSize: 10,
+  scheduledDelayMillis: 500,
+  exportTimeoutMillis: 30000
+}));
+traceProvider.register();
 
-// Configure the console exporter and span processor
-const consoleExporter = new ConsoleSpanExporter();
-const consoleSpanProcessor = new SimpleSpanProcessor(consoleExporter);
-tracerProvider.addSpanProcessor(consoleSpanProcessor);
-
-// Configure the OTLP exporter and span processor
-const otlpExporter = new CollectorTraceExporter();
-const otlpSpanProcessor = new SimpleSpanProcessor(otlpExporter);
-tracerProvider.addSpanProcessor(otlpSpanProcessor);
-
-// Register the tracer provider
-tracerProvider.register();
-
-// Initialize the Meter Provider
-const meterProvider = new MeterProvider();
-const ingestRequestCounter = meter.createCounter('ingest_requests_total', {
-  description: 'Total number of successful requests to the /ingest endpoint',
+// Metrics configuration
+const metricExporter = new OTLPMetricExporter({
+  url: 'http://localhost:4318/v1/metrics',
+  headers: {},
+  concurrencyLimit: 1
 });
-
-// Register the instrumentations
-registerInstrumentations({
-  tracerProvider,
-  meterProvider,
-  instrumentations: [
-    getNodeAutoInstrumentations(),
-  ],
-});
-
-console.log('Tracer and meter providers initialized.');
+const meter
