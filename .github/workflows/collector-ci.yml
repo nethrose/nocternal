@@ -1,0 +1,34 @@
+name: Collector CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/collector/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/collector/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js environment
+      uses: actions/setup-node@v2
+      with:
+        node-version: 14
+
+    - name: Validate collector configuration
+      run: |
+        cd backend/collector
+        # You may need to install a YAML linter to validate the configuration file
+        # For example, you can use 'npm install -g yaml-lint' to install the yaml-lint package
+        npm install -g yaml-lint
+        yamllint otel-collector-config.yaml
