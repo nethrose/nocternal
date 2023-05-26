@@ -24,9 +24,9 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 14
-        env:
-          ELASTIC_SERVICE_TOKEN: ${{ secrets.ELASTIC_SERVICE_TOKEN }}
-          ELASTIC_SERVER_URL: ${{ secrets.ELASTIC_SERVER_URL }}
+      env:
+        ELASTIC_SERVICE_TOKEN: ${{ secrets.ELASTIC_SERVICE_TOKEN }}
+        ELASTIC_SERVER_URL: ${{ secrets.ELASTIC_SERVER_URL }}
         
     - name: Install dependencies
       run: |
