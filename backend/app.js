@@ -1,4 +1,12 @@
 // edit this line to trigger the backend CI
+
+var apm = require('elastic-apm-node').start({
+  
+  serviceName: "nocternal",
+  secretToken: process.env.ELASTIC_SERVICE_TOKEN,
+  serverUrl: process.env.ELASTIC_SERVER_URL
+})
+
 const express = require('express');
 const { Pool } = require('pg');
 const { tracer } = require('./utils/tracer');
