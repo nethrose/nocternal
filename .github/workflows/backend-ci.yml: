@@ -24,9 +24,6 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: 14
-      env:
-        ELASTIC_SERVICE_TOKEN: ${{ secrets.ELASTIC_SERVICE_TOKEN }}
-        ELASTIC_SERVER_URL: ${{ secrets.ELASTIC_SERVER_URL }}
         
     - name: Install dependencies
       run: |
@@ -51,8 +48,7 @@ jobs:
             "@opentelemetry/sdk-trace-base": "^1.11.0",
             "@opentelemetry/sdk-trace-web": "^1.11.0",
             "@opentelemetry/sdk-metrics": "^1.11.0",
-            "@opentelemetry/auto-instrumentations-node": "^0.36.4",
-            "elastic-apm-node": "^3.46.0"
+            "@opentelemetry/auto-instrumentations-node": "^0.36.4"
           },
           "devDependencies": {
             "jest": "^27.4.7",
@@ -191,4 +187,3 @@ jobs:
         -d "{\"rules\": $updated_rules}")
         echo "$response"
         echo "$response" | grep "HTTP/2 204" || exit 1
-    
